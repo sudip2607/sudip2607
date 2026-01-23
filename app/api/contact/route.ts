@@ -45,10 +45,12 @@ function isValidMessage(msg: string): boolean {
   return len >= CONSTRAINTS.message.min && len <= CONSTRAINTS.message.max && !/^\s+$/.test(msg)
 }
 
-async function verifyRecaptcha(token: string): Promise<boolean> {
+type RecaptchaResult = { success: boolean; score: number }
+
+async function verifyRecaptcha(token: string): Promise<RecaptchaResult> {
   if (!process.env.RECAPTCHA_SECRET_KEY) {
     // Skip verification if secret key not configured
-    return true
+    return { success: true, score: 1 }
   }
 
   try {
@@ -59,11 +61,14 @@ async function verifyRecaptcha(token: string): Promise<boolean> {
     })
 
     const data = await response.json()
-    // Score should be > 0.5 for v3 (1.0 = definitely human, 0.0 = definitely bot)
-    return data.success && (data.score ?? 0) > 0.5
+    const score = Number(data?.score ?? 0)
+    const success = Boolean(data?.success)
+    // Return raw result; caller decides whether to block
+    return { success, score }
   } catch (err) {
     console.error('reCAPTCHA verification error:', err)
-    return false
+    // Do not block on errors; allow submission but log
+    return { success: true, score: 0 }
   }
 }
 
@@ -82,12 +87,16 @@ export async function POST(request: NextRequest) {
 
     // Verify reCAPTCHA first
     if (recaptchaToken) {
-      const isHuman = await verifyRecaptcha(recaptchaToken)
-      if (!isHuman) {
+      const result = await verifyRecaptcha(recaptchaToken)
+      // Only block if verification explicitly failed (invalid token). If score is low, log and continue.
+      if (!result.success) {
         return NextResponse.json(
           { error: 'reCAPTCHA verification failed. Please try again.' },
           { status: 403 }
         )
+      }
+      if (result.score < 0.3) {
+        console.warn('Low reCAPTCHA score:', result.score)
       }
     }
 
