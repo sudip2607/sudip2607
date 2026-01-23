@@ -16,6 +16,9 @@ const CONSTRAINTS = {
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Ensure this route runs on the Node.js runtime (Resend SDK is not Edge-ready in all cases)
+export const runtime = 'nodejs'
+
 function getClientIp(req: NextRequest) {
   const xf = req.headers.get('x-forwarded-for') || ''
   const ip = xf.split(',')[0]?.trim()
@@ -153,37 +156,100 @@ export async function POST(request: NextRequest) {
     const safeSubject = sanitize(subject?.trim?.() || '')
     const safeMessage = sanitize(message?.trim?.() || '').replace(/\n/g, '<br />')
 
+    let adminEmailSent = false
+    let userEmailSent = false
+    let fallbackUsed = false
+
     // Send email notification to your email
-    await resend.emails.send({
-      from: `Contact Form <${fromEmail}>`,
-      to: toEmail,
-      subject: `New Contact Form Submission: ${safeSubject}`,
-      html: `
-        <h2>New message from ${safeName}</h2>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Subject:</strong> ${safeSubject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${safeMessage}</p>
-      `,
-    })
+    try {
+      await resend.emails.send({
+        from: `Contact Form <${fromEmail}>`,
+        to: toEmail,
+        subject: `New Contact Form Submission: ${safeSubject}`,
+        html: `
+          <h2>New message from ${safeName}</h2>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Subject:</strong> ${safeSubject}</p>
+          <p><strong>Message:</strong></p>
+          <p>${safeMessage}</p>
+        `,
+      })
+      adminEmailSent = true
+    } catch (e: any) {
+      console.error('Resend admin email error:', e?.message || e)
+      // Fallback to Resend onboarding sender if domain not verified
+      if (fromEmail !== 'onboarding@resend.dev') {
+        try {
+          await resend.emails.send({
+            from: `Contact Form <onboarding@resend.dev>`,
+            to: toEmail,
+            subject: `New Contact Form Submission: ${safeSubject}`,
+            html: `
+              <h2>New message from ${safeName}</h2>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Subject:</strong> ${safeSubject}</p>
+              <p><strong>Message:</strong></p>
+              <p>${safeMessage}</p>
+            `,
+          })
+          adminEmailSent = true
+          fallbackUsed = true
+        } catch (fallbackErr: any) {
+          console.error('Resend admin email fallback error:', fallbackErr?.message || fallbackErr)
+        }
+      }
+    }
 
     // Send confirmation email to sender
-    await resend.emails.send({
-      from: `Sudip Sen <${fromEmail}>`,
-      to: email,
-      subject: 'Thank you for reaching out!',
-      html: `
-        <h2>Hi ${safeName},</h2>
-        <p>Thank you for your message. I've received your submission and will get back to you as soon as possible.</p>
-        <p><strong>Your message:</strong></p>
-        <p>${safeMessage}</p>
-        <br />
-        <p>Best regards,<br />Sudip Sen</p>
-      `,
-    })
+    try {
+      await resend.emails.send({
+        from: `Sudip Sen <${fromEmail}>`,
+        to: email,
+        subject: 'Thank you for reaching out!',
+        html: `
+          <h2>Hi ${safeName},</h2>
+          <p>Thank you for your message. I've received your submission and will get back to you as soon as possible.</p>
+          <p><strong>Your message:</strong></p>
+          <p>${safeMessage}</p>
+          <br />
+          <p>Best regards,<br />Sudip Sen</p>
+        `,
+      })
+      userEmailSent = true
+    } catch (e: any) {
+      console.error('Resend user email error:', e?.message || e)
+      if (fromEmail !== 'onboarding@resend.dev') {
+        try {
+          await resend.emails.send({
+            from: `Sudip Sen <onboarding@resend.dev>`,
+            to: email,
+            subject: 'Thank you for reaching out!',
+            html: `
+              <h2>Hi ${safeName},</h2>
+              <p>Thank you for your message. I've received your submission and will get back to you as soon as possible.</p>
+              <p><strong>Your message:</strong></p>
+              <p>${safeMessage}</p>
+              <br />
+              <p>Best regards,<br />Sudip Sen</p>
+            `,
+          })
+          userEmailSent = true
+          fallbackUsed = true
+        } catch (fallbackErr: any) {
+          console.error('Resend user email fallback error:', fallbackErr?.message || fallbackErr)
+        }
+      }
+    }
+
+    if (!adminEmailSent && !userEmailSent) {
+      return NextResponse.json(
+        { error: 'Email service failed to send messages' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
-      { success: true, message: 'Message sent successfully' },
+      { success: true, message: fallbackUsed ? 'Message sent successfully (using fallback sender)' : 'Message sent successfully' },
       { status: 200 }
     )
   } catch (error) {
