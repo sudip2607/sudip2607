@@ -1,7 +1,9 @@
 import Header from '@/components/header'
 import Hero from '@/components/hero'
 import About from '@/components/about'
+import Vision from '@/components/vision'
 import Skills from '@/components/skills'
+import Leadership from '@/components/leadership'
 import Experience from '@/components/experience'
 import Projects from '@/components/projects'
 import Certifications from '@/components/certifications'
@@ -14,7 +16,9 @@ export default function Home() {
       <Header />
       <Hero />
       <About />
+      <Vision />
       <Skills />
+      <Leadership />
       <Experience />
       <Projects />
       <Certifications />

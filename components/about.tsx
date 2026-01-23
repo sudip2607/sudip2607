@@ -29,8 +29,8 @@ const highlights = [
 
 const stats = [
   { value: 14, suffix: '+', label: 'Years Experience' },
+  { value: 10, suffix: '+', label: 'Professional Projects Delivered' },
   { value: 7, suffix: '+', label: 'Data Products' },
-  { value: 10, suffix: '+', label: 'Projects Delivered' },
   { value: 6, suffix: '+', label: 'Analytics Teams Supported' },
   { value: 8, suffix: '', label: 'Certifications' },
 ]
@@ -77,11 +77,18 @@ export default function About() {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             About <span className="gradient-text">Me</span>
           </h2>
-          <p className="text-muted-foreground max-w-3xl mx-auto text-lg">
-            Data & Analytics Architect with extensive experience delivering modern data platforms 
-            and enterprise data products across MedTech commercial analytics, consumer, supply chain, 
-            insurance, and banking domains.
-          </p>
+          <div className="text-muted-foreground max-w-3xl mx-auto text-lg space-y-4">
+            <p>
+              Data & Analytics Architect with <strong>14+ years</strong> delivering modern data platforms and enterprise 
+              data products across MedTech, consumer, supply chain, insurance, and banking domains.
+            </p>
+            <p>
+              Proven leader with experience managing cross-functional teams of <strong>15-18 engineers</strong> and analysts, 
+              driving vendor integrations, and mentoring junior developers to improve team productivity by <strong>30%</strong>. 
+              Skilled in translating complex technical requirements into scalable solutions while fostering 
+              collaboration across business stakeholders, engineering teams, and executive leadership.
+            </p>
+          </div>
         </motion.div>
 
         {/* Stats */}
@@ -106,7 +113,7 @@ export default function About() {
         </motion.div>
 
         {/* Highlights */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 mt-16">
           {highlights?.map?.((item, index) => {
             const Icon = item?.icon ?? Target
             return (

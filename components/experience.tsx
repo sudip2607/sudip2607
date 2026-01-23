@@ -1,8 +1,29 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { Briefcase, MapPin, Calendar, ChevronRight } from 'lucide-react'
+import { Briefcase, MapPin, Calendar, ChevronRight, ChevronDown } from 'lucide-react'
+import { useState } from 'react'
+
+// Component to parse and render achievement text with bold and color styling
+const AchievementText = ({ text }: { text: string }) => {
+  const parts = text.split(/(<strong>.*?<\/strong>)/);
+  return (
+    <span className="inline">
+      {parts.map((part, i) => {
+        if (part.startsWith('<strong>') && part.endsWith('</strong>')) {
+          const content = part.replace(/<\/?strong>/g, '');
+          return (
+            <span key={i} className="font-bold text-[#E35336]">
+              {content}
+            </span>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </span>
+  );
+};
 
 const experiences = [
   {
@@ -12,12 +33,12 @@ const experiences = [
     location: 'New Jersey, USA',
     period: 'Sept 2022 – Present',
     achievements: [
-      'Led 3 major vendor integrations (Clarivate, AcuityMD, SourceView) delivering enterprise data models and materialized serving views',
-      'Designed SourceView contract compliance validation framework with Analytics & Time-of-Compliance logic',
-      'Implemented Data Quality controls: validation rules, automated file-level rejection with Control-M scheduling',
-      'Architected scalable data products on RADAR platform; aligned ingestion, storage, curation, and serving layers',
-      'Delivered customer master integration: onboarded 20+ CMDM objects into PostgreSQL and Amazon Redshift',
-      'Built customer unification logic using MedTech_ID-based matching for 6+ analytics teams',
+      'Led a cross-functional team of <strong>15+ engineers</strong> and analysts to integrate <strong>3 major vendors</strong> (Clarivate, AcuityMD, SourceView), delivering enterprise data models and materialized serving views on-time and under budget',
+      'Mentored <strong>5+ junior developers</strong> in SQL best practices, improving code review cycle time by <strong>40%</strong> and establishing reusable design patterns',
+      'Designed SourceView contract compliance validation framework with Analytics & Time-of-Compliance logic, reducing manual audit efforts by <strong>40%</strong> and improving job efficiency by <strong>66%</strong>',
+      'Implemented Data Quality framework with validation rules and automated file-level rejection, achieving <strong>98% data accuracy</strong> across ingestion pipelines',
+      'Collaborated with <strong>6+ analytics teams</strong> and business stakeholders to architect scalable data products on RADAR platform; aligned ingestion, storage, curation, and serving layers',
+      'Delivered customer master integration: onboarded <strong>20+</strong> Commercial Master Data Management (CMDM) objects into PostgreSQL and Amazon Redshift, serving <strong>50+ business users</strong> across NA Commercial Analytics',
     ],
   },
   {
@@ -27,8 +48,9 @@ const experiences = [
     location: 'New Jersey, USA',
     period: 'Mar 2022 – Aug 2022',
     achievements: [
-      'Automated payment validation by standardizing multi-source Excel inputs with rule-driven checks',
-      'Delivered Alteryx-based validation solution with estimated savings of ~4,800 hours/year',
+      'Led stakeholder workshops with Finance and Operations teams to identify pain points, translating business requirements into technical validation rules',
+      'Automated payment validation by standardizing <strong>15+ multi-source</strong> Excel inputs with rule-driven checks, eliminating <strong>4,800 manual hours</strong> annually',
+      'Delivered Alteryx-based solution with <strong>95% automation rate</strong>, enabling Finance team to redirect efforts toward strategic analysis',
     ],
   },
   {
@@ -38,8 +60,9 @@ const experiences = [
     location: 'New Jersey, USA',
     period: 'Jan 2019 – Feb 2022',
     achievements: [
-      'Designed and delivered EDW solutions across planning/forecasting/sales, inventory, and non-conformance',
-      'Built ETL using Informatica + Unix scripting on Teradata; led SIT/UAT support, releases, and migration',
+      'Managed a team of <strong>6 ETL developers</strong> to design and deliver EDW solutions across planning, forecasting, sales, inventory, and non-conformance, supporting <strong>$2B+ supply chain</strong> operations',
+      'Built ETL pipelines using Informatica + Unix scripting on Teradata; led SIT/UAT coordination with <strong>10+ business analysts</strong>, ensuring zero-defect releases',
+      'Resolved stakeholder conflicts by facilitating alignment sessions between Supply Chain, IT, and Analytics teams, ensuring project milestones were met',
     ],
   },
   {
@@ -49,8 +72,9 @@ const experiences = [
     location: 'Kolkata, India',
     period: 'Jul 2016 – Dec 2018',
     achievements: [
-      'Delivered data warehousing enhancements for Orthopaedics metrics (OTIF, inventory, forecast)',
-      'Developed Informatica mappings and Teradata queries; built Tableau dashboards',
+      'Delivered data warehousing enhancements for Orthopaedics metrics (OTIF, inventory, forecast), improving forecast accuracy by <strong>15%</strong>',
+      'Developed Informatica mappings and Teradata queries; built <strong>5+ Tableau dashboards</strong> consumed by <strong>20+ business users</strong> in Field Sales and Operations',
+      'Mentored offshore team members in dimensional modeling and ETL troubleshooting, reducing production incidents by <strong>25%</strong>',
     ],
   },
   {
@@ -60,14 +84,15 @@ const experiences = [
     location: 'Bangalore, Kolkata, Netherlands',
     period: 'July 2011 – Jul 2016',
     achievements: [
-      'Insurance (Reaal N.V.): coordinated platform migration, production support (Informatica/Oracle/ServiceNow)',
-      'Banking (American Express): delivered ETL query performance tuning on payments/settlement platform',
+      'Insurance (Reaal N.V.): Coordinated platform migration with <strong>99.9% uptime</strong>, providing 24/7 production support via ServiceNow; reduced yearly 50+ P1 incidents to <strong>< 5 incidents</strong>',
+      'Banking (American Express): Delivered ETL query performance tuning on Credit Card payments/settlement platform. Developed COBOL based interface automation reducing issue analysis time by <strong>45%</strong>',
     ],
   },
 ]
 
 export default function Experience() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(0)
 
   return (
     <section id="experience" className="py-20 md:py-32 relative">
@@ -99,14 +124,17 @@ export default function Experience() {
               initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
               animate={inView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.1 * index }}
-              className={`relative mb-8 md:mb-12 ${index % 2 === 0 ? 'md:pr-8 md:text-right md:ml-0 md:mr-auto md:w-1/2' : 'md:pl-8 md:ml-auto md:w-1/2'} pl-8 md:pl-0`}
+              className={`relative mb-8 md:mb-12 ${index % 2 === 0 ? 'md:pr-8 md:ml-0 md:mr-auto md:w-1/2' : 'md:pl-8 md:ml-auto md:w-1/2'} pl-8 md:pl-0`}
             >
               {/* Timeline dot */}
-              <div className={`absolute top-0 ${index % 2 === 0 ? 'left-0 md:left-auto md:-right-3' : 'left-0 md:-left-3'} w-6 h-6 rounded-full bg-gradient-to-br from-[#E35336] to-[#A0522D] flex items-center justify-center`}>
+              <div className={`absolute top-0 ${index % 2 === 0 ? 'left-0 md:left-auto md:-right-3' : 'left-0 md:-left-3'} w-6 h-6 rounded-full bg-gradient-to-br from-[#E35336] to-[#A0522D] flex items-center justify-center cursor-pointer hover:scale-110 transition-transform`} onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}>
                 <div className="w-2 h-2 rounded-full bg-background" />
               </div>
 
-              <div className="group glass p-6 rounded-2xl hover:shadow-lg hover:shadow-[#E35336]/10 transition-all duration-300">
+              <div
+                className="group glass p-6 rounded-2xl hover:shadow-lg hover:shadow-[#E35336]/10 transition-all duration-300 cursor-pointer"
+                onClick={() => setExpandedIndex(expandedIndex === index ? null : index)}
+              >
                 <div className={`flex flex-wrap items-center gap-2 mb-2 text-sm text-muted-foreground ${index % 2 === 0 ? 'md:justify-end' : ''}`}>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
@@ -118,20 +146,42 @@ export default function Experience() {
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold mb-1 group-hover:text-[#E35336] transition-colors">
-                  {exp?.title ?? ''}
-                </h3>
-                <p className="text-[#E35336] font-medium mb-1">{exp?.company ?? ''}</p>
-                <p className="text-sm text-muted-foreground mb-4">{exp?.project ?? ''}</p>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold mb-1 group-hover:text-[#E35336] transition-colors">
+                      {exp?.title ?? ''}
+                    </h3>
+                    <p className="text-[#E35336] font-medium mb-1">{exp?.company ?? ''}</p>
+                    <p className="text-sm text-muted-foreground mb-4">{exp?.project ?? ''}</p>
+                  </div>
+                  <ChevronDown className={`w-5 h-5 text-[#E35336] flex-shrink-0 transition-transform ${expandedIndex === index ? 'rotate-180' : ''}`} />
+                </div>
 
-                <ul className={`space-y-2 ${index % 2 === 0 ? 'md:text-left' : ''}`}>
-                  {exp?.achievements?.map?.((achievement, achIndex) => (
-                    <li key={achIndex} className="text-sm text-muted-foreground flex items-start gap-2">
-                      <ChevronRight className="w-4 h-4 text-[#E35336] flex-shrink-0 mt-0.5" />
-                      <span>{achievement ?? ''}</span>
-                    </li>
-                  )) ?? []}
-                </ul>
+                <AnimatePresence initial={false}>
+                  {expandedIndex === index && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ 
+                        duration: 0.4,
+                        ease: [0.04, 0.62, 0.23, 0.98]
+                      }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-4 border-t border-muted-foreground/20">
+                        <ul className="space-y-2">
+                          {exp?.achievements?.map?.((achievement, achIndex) => (
+                            <li key={achIndex} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <ChevronRight className="w-4 h-4 text-[#E35336] flex-shrink-0 mt-0.5" />
+                              <AchievementText text={achievement} />
+                            </li>
+                          )) ?? []}
+                        </ul>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )) ?? []}

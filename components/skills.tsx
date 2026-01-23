@@ -20,13 +20,13 @@ const skillCategories = [
   {
     title: 'Data Integration',
     icon: Workflow,
-    skills: ['Informatica PowerCenter', 'Control-M', 'PySpark', 'Alteryx', 'Databricks', 'dbt core'],
+    skills: ['Databricks', 'SQL Script', 'Python Scripting', 'dbt core', 'PySpark', 'Unix/Shell', 'Alteryx', 'Informatica PowerCenter'],
     color: 'from-[#A0522D] to-[#E35336]',
   },
   {
     title: 'Databases',
     icon: Database,
-    skills: ['Amazon Redshift', 'PostgreSQL', 'Teradata', 'Oracle'],
+    skills: ['Amazon Redshift', 'PostgreSQL', 'Teradata', 'Snowflake', 'Oracle'],
     color: 'from-[#E35336] to-[#F4A460]',
   },
   {
