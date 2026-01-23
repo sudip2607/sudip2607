@@ -60,16 +60,16 @@ export default function Contact() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
 
-  // Load reCAPTCHA script
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
-      const script = document.createElement('script')
-      script.src = 'https://www.google.com/recaptcha/api.js'
-      script.async = true
-      script.defer = true
-      document.head.appendChild(script)
-    }
-  }, [])
+  // Temporarily disabled reCAPTCHA for debugging
+  // useEffect(() => {
+  //   if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
+  //     const script = document.createElement('script')
+  //     script.src = 'https://www.google.com/recaptcha/api.js'
+  //     script.async = true
+  //     script.defer = true
+  //     document.head.appendChild(script)
+  //   }
+  // }, [])
 
   const validateField = (fieldName: string, value: string): string | null => {
     switch (fieldName) {
@@ -137,19 +137,19 @@ export default function Contact() {
     setStatus('loading')
 
     try {
-      // Get reCAPTCHA token if available
-      let recaptchaToken = ''
-      if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (window as any).grecaptcha) {
-        recaptchaToken = await (window as any).grecaptcha.execute(
-          process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
-          { action: 'submit' }
-        )
-      }
+      // Temporarily skip reCAPTCHA for debugging
+      // let recaptchaToken = ''
+      // if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (window as any).grecaptcha) {
+      //   recaptchaToken = await (window as any).grecaptcha.execute(
+      //     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+      //     { action: 'submit' }
+      //   )
+      // }
 
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, recaptchaToken }),
+        body: JSON.stringify(formData),
       })
 
       const responseData = await response.json()
