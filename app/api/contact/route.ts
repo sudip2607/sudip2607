@@ -85,21 +85,20 @@ export async function POST(request: NextRequest) {
     const body = await request?.json?.()
     const { name, email, subject, message, recaptchaToken } = body ?? {}
 
-    // Temporarily disable reCAPTCHA to debug email sending
-    // if (recaptchaToken) {
-    //   const result = await verifyRecaptcha(recaptchaToken)
-    //   // Only block if verification explicitly failed (invalid token). If score is low, log and continue.
-    //   if (!result.success) {
-    //     return NextResponse.json(
-    //       { error: 'reCAPTCHA verification failed. Please try again.' },
-    //       { status: 403 }
-    //     )
-    //   }
-    //   if (result.score < 0.3) {
-    //     console.warn('Low reCAPTCHA score:', result.score)
-    //   }
-    // }
-    console.log('[Contact API] reCAPTCHA disabled for debugging')
+    // Verify reCAPTCHA first
+    if (recaptchaToken) {
+      const result = await verifyRecaptcha(recaptchaToken)
+      // Only block if verification explicitly failed (invalid token). If score is low, log and continue.
+      if (!result.success) {
+        return NextResponse.json(
+          { error: 'reCAPTCHA verification failed. Please try again.' },
+          { status: 403 }
+        )
+      }
+      if (result.score < 0.3) {
+        console.warn('Low reCAPTCHA score:', result.score)
+      }
+    }
 
     // Validate all fields exist
     if (!name || !email || !subject || !message) {

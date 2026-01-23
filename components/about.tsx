@@ -29,8 +29,9 @@ const highlights = [
 
 const stats = [
   { value: 14, suffix: '+', label: 'Years Experience' },
-  { value: 20, suffix: '+', label: 'Data Objects' },
-  { value: 6, suffix: '+', label: 'Analytics Teams' },
+  { value: 7, suffix: '+', label: 'Data Products' },
+  { value: 10, suffix: '+', label: 'Projects Delivered' },
+  { value: 6, suffix: '+', label: 'Analytics Teams Supported' },
   { value: 8, suffix: '', label: 'Certifications' },
 ]
 

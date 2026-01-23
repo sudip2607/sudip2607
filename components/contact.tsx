@@ -60,16 +60,16 @@ export default function Contact() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 })
 
-  // Temporarily disabled reCAPTCHA for debugging
-  // useEffect(() => {
-  //   if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
-  //     const script = document.createElement('script')
-  //     script.src = 'https://www.google.com/recaptcha/api.js'
-  //     script.async = true
-  //     script.defer = true
-  //     document.head.appendChild(script)
-  //   }
-  // }, [])
+  // Load reCAPTCHA script
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
+      const script = document.createElement('script')
+      script.src = 'https://www.google.com/recaptcha/api.js'
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+    }
+  }, [])
 
   const validateField = (fieldName: string, value: string): string | null => {
     switch (fieldName) {
@@ -137,19 +137,19 @@ export default function Contact() {
     setStatus('loading')
 
     try {
-      // Temporarily skip reCAPTCHA for debugging
-      // let recaptchaToken = ''
-      // if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (window as any).grecaptcha) {
-      //   recaptchaToken = await (window as any).grecaptcha.execute(
-      //     process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
-      //     { action: 'submit' }
-      //   )
-      // }
+      // Get reCAPTCHA token if available
+      let recaptchaToken = ''
+      if (process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (window as any).grecaptcha) {
+        recaptchaToken = await (window as any).grecaptcha.execute(
+          process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
+          { action: 'submit' }
+        )
+      }
 
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, recaptchaToken }),
       })
 
       const responseData = await response.json()
@@ -411,14 +411,13 @@ export default function Contact() {
               <p className="text-xs text-muted-foreground text-center mt-4">
                 Your information will be stored securely and used only to respond to your inquiry.
               </p>
-              {/* Temporarily hidden reCAPTCHA notice for debugging */}
-              {/* {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+              {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
                 <p className="text-xs text-muted-foreground text-center mt-2">
                   This site is protected by reCAPTCHA and the Google
                   <a href="https://policies.google.com/privacy" className="text-[#E35336] hover:underline" target="_blank" rel="noopener noreferrer"> Privacy Policy</a> and
                   <a href="https://policies.google.com/terms" className="text-[#E35336] hover:underline" target="_blank" rel="noopener noreferrer"> Terms of Service</a> apply.
                 </p>
-              )} */}
+              )}
             </form>
           </motion.div>
         </div>
