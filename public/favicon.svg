@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#14b8a6;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#1e3a8a;stop-opacity:1"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="url(#grad)"/>
+  <path d="M40 80h40v8h-40zM60 96h60v8h-60zM40 112h50v8h-50z" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="50" cy="84" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="70" cy="100" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="55" cy="116" r="4" fill="rgba(255,255,255,0.4)"/>
+  <path d="M176 80h40v8h-40zM156 96h60v8h-60zM166 112h50v8h-50z" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="206" cy="84" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="186" cy="100" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="201" cy="116" r="4" fill="rgba(255,255,255,0.4)"/>
+  <path d="M40 160h40v8h-40zM60 176h60v8h-60z" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="50" cy="164" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="70" cy="180" r="4" fill="rgba(255,255,255,0.4)"/>
+  <path d="M176 160h40v8h-40zM156 176h60v8h-60z" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="206" cy="164" r="4" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="186" cy="180" r="4" fill="rgba(255,255,255,0.4)"/>
+  <text x="128" y="150" font-family="Arial, sans-serif" font-size="96" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">SS</text>
+</svg>

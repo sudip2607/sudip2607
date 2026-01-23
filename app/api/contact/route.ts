@@ -1,0 +1,196 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { Resend } from 'resend'
+
+// Simple in-memory rate limiter (per server instance)
+const requests = new Map<string, { count: number; resetAt: number }>()
+const MAX_REQUESTS = 3
+const WINDOW_MS = 10 * 60 * 1000 // 10 minutes
+
+// Validation constraints
+const CONSTRAINTS = {
+  name: { min: 1, max: 100 },
+  email: { min: 5, max: 254 }, // RFC 5321
+  subject: { min: 3, max: 200 },
+  message: { min: 20, max: 500 },
+}
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+function getClientIp(req: NextRequest) {
+  const xf = req.headers.get('x-forwarded-for') || ''
+  const ip = xf.split(',')[0]?.trim()
+  return ip || 'local'
+}
+
+function sanitize(input: string) {
+  return (input || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const len = email?.length ?? 0
+  return emailRegex.test(email) && len >= CONSTRAINTS.email.min && len <= CONSTRAINTS.email.max
+}
+
+function isValidMessage(msg: string): boolean {
+  const trimmed = msg?.trim?.() ?? ''
+  const len = trimmed.length
+  // Check if all spaces or outside length bounds
+  return len >= CONSTRAINTS.message.min && len <= CONSTRAINTS.message.max && !/^\s+$/.test(msg)
+}
+
+async function verifyRecaptcha(token: string): Promise<boolean> {
+  if (!process.env.RECAPTCHA_SECRET_KEY) {
+    // Skip verification if secret key not configured
+    return true
+  }
+
+  try {
+    const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`,
+    })
+
+    const data = await response.json()
+    // Score should be > 0.5 for v3 (1.0 = definitely human, 0.0 = definitely bot)
+    return data.success && (data.score ?? 0) > 0.5
+  } catch (err) {
+    console.error('reCAPTCHA verification error:', err)
+    return false
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Ensure email service is configured
+    if (!process.env.RESEND_API_KEY) {
+      return NextResponse.json(
+        { error: 'Email service not configured' },
+        { status: 500 }
+      )
+    }
+
+    const body = await request?.json?.()
+    const { name, email, subject, message, recaptchaToken } = body ?? {}
+
+    // Verify reCAPTCHA first
+    if (recaptchaToken) {
+      const isHuman = await verifyRecaptcha(recaptchaToken)
+      if (!isHuman) {
+        return NextResponse.json(
+          { error: 'reCAPTCHA verification failed. Please try again.' },
+          { status: 403 }
+        )
+      }
+    }
+
+    // Validate all fields exist
+    if (!name || !email || !subject || !message) {
+      return NextResponse.json(
+        { error: 'All fields are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate name
+    const nameTrimmed = name?.trim?.() ?? ''
+    if (nameTrimmed.length < CONSTRAINTS.name.min || nameTrimmed.length > CONSTRAINTS.name.max) {
+      return NextResponse.json(
+        { error: `Name must be between ${CONSTRAINTS.name.min} and ${CONSTRAINTS.name.max} characters` },
+        { status: 400 }
+      )
+    }
+
+    // Validate email format and length
+    if (!isValidEmail(email)) {
+      return NextResponse.json(
+        { error: 'Please provide a valid email address' },
+        { status: 400 }
+      )
+    }
+
+    // Validate subject
+    const subjectTrimmed = subject?.trim?.() ?? ''
+    if (subjectTrimmed.length < CONSTRAINTS.subject.min || subjectTrimmed.length > CONSTRAINTS.subject.max) {
+      return NextResponse.json(
+        { error: `Subject must be at least ${CONSTRAINTS.subject.min} characters` },
+        { status: 400 }
+      )
+    }
+
+    // Validate message
+    if (!isValidMessage(message)) {
+      return NextResponse.json(
+        { error: `Message must be between ${CONSTRAINTS.message.min} and ${CONSTRAINTS.message.max} characters (no empty spaces)` },
+        { status: 400 }
+      )
+    }
+
+    // Rate limit per client IP
+    const ip = getClientIp(request)
+    const now = Date.now()
+    const entry = requests.get(ip)
+    if (entry && entry.resetAt > now && entry.count >= MAX_REQUESTS) {
+      return NextResponse.json(
+        { error: 'Too many submissions. Please try again later.' },
+        { status: 429 }
+      )
+    }
+    if (!entry || entry.resetAt <= now) {
+      requests.set(ip, { count: 1, resetAt: now + WINDOW_MS })
+    } else {
+      requests.set(ip, { count: entry.count + 1, resetAt: entry.resetAt })
+    }
+
+    // Skip database persistence; send emails via Resend
+    const toEmail = process.env.CONTACT_TO || 'sudip2607@icloud.com'
+    const fromEmail = process.env.CONTACT_FROM || 'onboarding@resend.dev'
+    const safeName = sanitize(name?.trim?.() || '')
+    const safeSubject = sanitize(subject?.trim?.() || '')
+    const safeMessage = sanitize(message?.trim?.() || '').replace(/\n/g, '<br />')
+
+    // Send email notification to your email
+    await resend.emails.send({
+      from: `Contact Form <${fromEmail}>`,
+      to: toEmail,
+      subject: `New Contact Form Submission: ${safeSubject}`,
+      html: `
+        <h2>New message from ${safeName}</h2>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Subject:</strong> ${safeSubject}</p>
+        <p><strong>Message:</strong></p>
+        <p>${safeMessage}</p>
+      `,
+    })
+
+    // Send confirmation email to sender
+    await resend.emails.send({
+      from: `Sudip Sen <${fromEmail}>`,
+      to: email,
+      subject: 'Thank you for reaching out!',
+      html: `
+        <h2>Hi ${safeName},</h2>
+        <p>Thank you for your message. I've received your submission and will get back to you as soon as possible.</p>
+        <p><strong>Your message:</strong></p>
+        <p>${safeMessage}</p>
+        <br />
+        <p>Best regards,<br />Sudip Sen</p>
+      `,
+    })
+
+    return NextResponse.json(
+      { success: true, message: 'Message sent successfully' },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error('Contact form error:', error)
+    return NextResponse.json(
+      { error: 'Failed to submit message' },
+      { status: 500 }
+    )
+  }
+}
