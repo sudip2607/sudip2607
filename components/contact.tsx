@@ -411,13 +411,14 @@ export default function Contact() {
               <p className="text-xs text-muted-foreground text-center mt-4">
                 Your information will be stored securely and used only to respond to your inquiry.
               </p>
-              {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+              {/* Temporarily hidden reCAPTCHA notice for debugging */}
+              {/* {process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
                 <p className="text-xs text-muted-foreground text-center mt-2">
                   This site is protected by reCAPTCHA and the Google
                   <a href="https://policies.google.com/privacy" className="text-[#E35336] hover:underline" target="_blank" rel="noopener noreferrer"> Privacy Policy</a> and
                   <a href="https://policies.google.com/terms" className="text-[#E35336] hover:underline" target="_blank" rel="noopener noreferrer"> Terms of Service</a> apply.
                 </p>
-              )}
+              )} */}
             </form>
           </motion.div>
         </div>
