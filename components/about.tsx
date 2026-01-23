@@ -89,7 +89,7 @@ export default function About() {
           initial={{ opacity: 0, y: 40 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16"
+          className="grid grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-16"
         >
           {stats?.map?.((stat, index) => (
             <motion.div
