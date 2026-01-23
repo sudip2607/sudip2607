@@ -33,12 +33,12 @@ const experiences = [
     location: 'New Jersey, USA',
     period: 'Sept 2022 – Present',
     achievements: [
-      'Led a cross-functional team of <strong>15+ engineers</strong> and analysts to integrate <strong>3 major vendors</strong> (Clarivate, AcuityMD, SourceView), delivering enterprise data models and materialized serving views on-time and under budget',
+      'Led a cross-functional team of <strong>15+ engineers</strong> and analysts to integrate <strong>3 major vendors</strong>, delivering enterprise data models and materialized views on-time and under budget',
       'Mentored <strong>5+ junior developers</strong> in SQL best practices, improving code review cycle time by <strong>40%</strong> and establishing reusable design patterns',
-      'Designed SourceView contract compliance validation framework with Analytics & Time-of-Compliance logic, reducing manual audit efforts by <strong>40%</strong> and improving job efficiency by <strong>66%</strong>',
+      'Designed contract compliance validation framework with Point in Time and Analytics logic, reducing manual audit efforts by <strong>40%</strong> and improving job efficiency by <strong>66%</strong>',
       'Implemented Data Quality framework with validation rules and automated file-level rejection, achieving <strong>98% data accuracy</strong> across ingestion pipelines',
       'Collaborated with <strong>6+ analytics teams</strong> and business stakeholders to architect scalable data products on RADAR platform; aligned ingestion, storage, curation, and serving layers',
-      'Delivered customer master integration: onboarded <strong>20+</strong> Commercial Master Data Management (CMDM) objects into PostgreSQL and Amazon Redshift, serving <strong>50+ business users</strong> across NA Commercial Analytics',
+      'Delivered customer master integration: onboarded <strong>20+</strong> objects into PostgreSQL and Amazon Redshift, serving <strong>50+ business users</strong> across NA Commercial Analytics',
     ],
   },
   {
