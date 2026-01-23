@@ -85,20 +85,21 @@ export async function POST(request: NextRequest) {
     const body = await request?.json?.()
     const { name, email, subject, message, recaptchaToken } = body ?? {}
 
-    // Verify reCAPTCHA first
-    if (recaptchaToken) {
-      const result = await verifyRecaptcha(recaptchaToken)
-      // Only block if verification explicitly failed (invalid token). If score is low, log and continue.
-      if (!result.success) {
-        return NextResponse.json(
-          { error: 'reCAPTCHA verification failed. Please try again.' },
-          { status: 403 }
-        )
-      }
-      if (result.score < 0.3) {
-        console.warn('Low reCAPTCHA score:', result.score)
-      }
-    }
+    // Temporarily disable reCAPTCHA to debug email sending
+    // if (recaptchaToken) {
+    //   const result = await verifyRecaptcha(recaptchaToken)
+    //   // Only block if verification explicitly failed (invalid token). If score is low, log and continue.
+    //   if (!result.success) {
+    //     return NextResponse.json(
+    //       { error: 'reCAPTCHA verification failed. Please try again.' },
+    //       { status: 403 }
+    //     )
+    //   }
+    //   if (result.score < 0.3) {
+    //     console.warn('Low reCAPTCHA score:', result.score)
+    //   }
+    // }
+    console.log('[Contact API] reCAPTCHA disabled for debugging')
 
     // Validate all fields exist
     if (!name || !email || !subject || !message) {
@@ -165,12 +166,15 @@ export async function POST(request: NextRequest) {
     const safeSubject = sanitize(subject?.trim?.() || '')
     const safeMessage = sanitize(message?.trim?.() || '').replace(/\n/g, '<br />')
 
+    console.log('[Contact API] Attempting to send emails:', { toEmail, fromEmail, safeName })
+
     let adminEmailSent = false
     let userEmailSent = false
     let fallbackUsed = false
 
     // Send email notification to your email
     try {
+      console.log('[Contact API] Sending admin email...')
       await resend.emails.send({
         from: `Contact Form <${fromEmail}>`,
         to: toEmail,
@@ -184,11 +188,18 @@ export async function POST(request: NextRequest) {
         `,
       })
       adminEmailSent = true
+      console.log('[Contact API] Admin email sent successfully')
     } catch (e: any) {
-      console.error('Resend admin email error:', e?.message || e)
+      console.error('[Contact API] Resend admin email error:', {
+        message: e?.message,
+        statusCode: e?.statusCode,
+        name: e?.name,
+        stack: e?.stack
+      })
       // Fallback to Resend onboarding sender if domain not verified
       if (fromEmail !== 'onboarding@resend.dev') {
         try {
+          console.log('[Contact API] Retrying admin email with fallback sender...')
           await resend.emails.send({
             from: `Contact Form <onboarding@resend.dev>`,
             to: toEmail,
@@ -203,14 +214,20 @@ export async function POST(request: NextRequest) {
           })
           adminEmailSent = true
           fallbackUsed = true
+          console.log('[Contact API] Admin email sent with fallback sender')
         } catch (fallbackErr: any) {
-          console.error('Resend admin email fallback error:', fallbackErr?.message || fallbackErr)
+          console.error('[Contact API] Resend admin email fallback error:', {
+            message: fallbackErr?.message,
+            statusCode: fallbackErr?.statusCode,
+            name: fallbackErr?.name
+          })
         }
       }
     }
 
     // Send confirmation email to sender
     try {
+      console.log('[Contact API] Sending user confirmation email...')
       await resend.emails.send({
         from: `Sudip Sen <${fromEmail}>`,
         to: email,
@@ -225,10 +242,17 @@ export async function POST(request: NextRequest) {
         `,
       })
       userEmailSent = true
+      console.log('[Contact API] User confirmation email sent successfully')
     } catch (e: any) {
-      console.error('Resend user email error:', e?.message || e)
+      console.error('[Contact API] Resend user email error:', {
+        message: e?.message,
+        statusCode: e?.statusCode,
+        name: e?.name,
+        stack: e?.stack
+      })
       if (fromEmail !== 'onboarding@resend.dev') {
         try {
+          console.log('[Contact API] Retrying user email with fallback sender...')
           await resend.emails.send({
             from: `Sudip Sen <onboarding@resend.dev>`,
             to: email,
@@ -244,8 +268,13 @@ export async function POST(request: NextRequest) {
           })
           userEmailSent = true
           fallbackUsed = true
+          console.log('[Contact API] User email sent with fallback sender')
         } catch (fallbackErr: any) {
-          console.error('Resend user email fallback error:', fallbackErr?.message || fallbackErr)
+          console.error('[Contact API] Resend user email fallback error:', {
+            message: fallbackErr?.message,
+            statusCode: fallbackErr?.statusCode,
+            name: fallbackErr?.name
+          })
         }
       }
     }
